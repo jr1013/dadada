@@ -17,9 +17,61 @@ const State = {
   fmt:      { type: 'digital', price: 0 },
   qty:      1,
 };
+/* ══════════════════════════════════════════
+   THEME & FONT SIZE
+══════════════════════════════════════════ */
+const FONT_STEPS = ['sm', 'md', 'lg', 'xl'];
+let fontIndex = 1; // default = 'md'
 
+function initTheme() {
+  // Respect saved preference, fall back to OS preference
+  const saved = localStorage.getItem('dadada_theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = saved || (prefersDark ? 'dark' : 'light');
+  applyTheme(theme);
+
+  // Font size
+  const savedFont = localStorage.getItem('dadada_font');
+  if (savedFont) {
+    fontIndex = FONT_STEPS.indexOf(savedFont);
+    if (fontIndex < 0) fontIndex = 1;
+    applyFont();
+  }
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('dadada_theme', theme);
+
+  // Update all toggle button labels
+  const icon   = theme === 'dark' ? '○' : '●';
+  const label  = theme === 'dark' ? '◑ Light' : '◑ Dark';
+  const el     = document.getElementById('themeIcon');
+  const drawer = document.getElementById('drawerThemeBtn');
+  if (el)     el.textContent = icon;
+  if (drawer) drawer.textContent = label;
+
+  document.getElementById('themeBtn')
+    ?.setAttribute('title', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+function changeFontSize(dir) {
+  fontIndex = Math.max(0, Math.min(FONT_STEPS.length - 1, fontIndex + dir));
+  applyFont();
+}
+
+function applyFont() {
+  document.documentElement.setAttribute('data-font', FONT_STEPS[fontIndex]);
+  localStorage.setItem('dadada_font', FONT_STEPS[fontIndex]);
+}
 /* ── BOOTSTRAP ── */
 async function init() {
+	initTheme(); 
   try {
     const [worksRes, configRes] = await Promise.all([
       fetch('data/works.json'),
