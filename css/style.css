@@ -988,7 +988,134 @@ img { display: block; max-width: 100%; }
   .fmt-grid { grid-template-columns: 1fr; }
   .nav__search { display: none; }
 }
+/* ══════════════════════════════════════════
+   THEME TOGGLE & FONT SIZE CONTROLS
+══════════════════════════════════════════ */
 
+/* Font size step — JS sets this on <html> */
+html { font-size: 100%; }
+html[data-font="sm"]  { font-size: 88%;  }
+html[data-font="md"]  { font-size: 100%; }
+html[data-font="lg"]  { font-size: 113%; }
+html[data-font="xl"]  { font-size: 125%; }
+
+/* Font controls group */
+.nav__font-ctrl {
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--mid);
+  height: 100%;
+}
+
+.nav__ctrl-btn {
+  font-family: var(--font);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--mid);
+  color: var(--ink);
+  height: 100%;
+  padding: 0 13px;
+  opacity: 0.45;
+  transition: opacity 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.nav__ctrl-btn:hover { opacity: 1; background: var(--faint); }
+
+/* Theme toggle button */
+.nav__theme-btn {
+  font-family: var(--font);
+  font-size: 14px;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--mid);
+  border-right: 1px solid var(--mid);
+  color: var(--ink);
+  height: 100%;
+  padding: 0 14px;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.nav__theme-btn:hover { opacity: 1; background: var(--faint); }
+
+.theme-icon {
+  font-size: 15px;
+  line-height: 1;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+/* Animate icon on toggle */
+html[data-theme="dark"]  .theme-icon { transform: rotate(180deg); }
+html[data-theme="light"] .theme-icon { transform: rotate(0deg); }
+
+/* Mobile drawer controls row */
+.nav__drawer-controls {
+  display: flex;
+  border-top: 1px solid var(--mid);
+  margin-top: 4px;
+}
+
+.nav__drawer-ctrl {
+  flex: 1;
+  font-family: var(--font);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--mid);
+  color: var(--ink);
+  padding: 15px 10px;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.nav__drawer-ctrl:last-child { border-right: none; }
+.nav__drawer-ctrl:hover, .nav__drawer-ctrl:active { opacity: 1; background: var(--faint); }
+
+/* ── EXPLICIT LIGHT THEME ── */
+html[data-theme="light"] {
+  --ink:   #0e0e0d;
+  --paper: #f5f3ee;
+  --mid:   #c8c5bc;
+  --faint: #eceae4;
+}
+
+/* ── EXPLICIT DARK THEME ── */
+html[data-theme="dark"] {
+  --ink:   #eceae4;
+  --paper: #111110;
+  --mid:   #333230;
+  --faint: #1c1b1a;
+}
+
+html[data-theme="dark"] .det__image-panel,
+html[data-theme="dark"] .reader__image  { background: #0a0a09; }
+html[data-theme="dark"] .cat-card__type-pip { background: var(--paper); }
+html[data-theme="dark"] .feat-card__cover,
+html[data-theme="dark"] .cat-card__cover,
+html[data-theme="dark"] .cart-thumb   { background: var(--faint); }
+html[data-theme="dark"] .status-pill--open { background: #1a2e16; color: #8ecb7e; border-color: #3a5e30; }
+html[data-theme="dark"] .how__format-card { background: var(--faint); }
+html[data-theme="dark"] .cart-summary { background: var(--faint); }
+
+/* Remove OS-level dark mode override since we now control it manually */
+@media (prefers-color-scheme: dark) {
+  /* Intentionally empty — JS handles theme, reads OS pref on first load */
+}
+
+/* Hide font controls on smallest screens to save space */
+@media (max-width: 600px) {
+  .nav__font-ctrl { display: none; }
+  .nav__theme-btn { display: none; }
+}
 /* ── PRINT STYLES ── */
 @media print {
   .nav, .reader__nav, .cart-btn, .btn-add-main, .btn-preview, .det__back { display: none !important; }
