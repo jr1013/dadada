@@ -4,40 +4,10 @@
 'use strict';
 
 /* ── FONT SIZE ── */
-const FONT_STEPS = ['sm', 'md', 'lg', 'xl'];
+const FONT_STEPS  = ['sm', 'md', 'lg', 'xl'];
+const FONT_VALUES = { sm: '11px', md: '13px', lg: '15px', xl: '17px' };
+const FONT_LABELS = { sm: 'Small', md: 'Medium', lg: 'Large', xl: 'X-Large' };
 let fontIndex = 1;
-
-function initTheme() {
-  const saved = localStorage.getItem('dadada_theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const theme = saved || (prefersDark ? 'dark' : 'light');
-  applyTheme(theme);
-
-  const savedFont = localStorage.getItem('dadada_font');
-  if (savedFont) {
-    const idx = FONT_STEPS.indexOf(savedFont);
-    fontIndex = idx >= 0 ? idx : 1;
-  }
-  applyFont();
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('dadada_theme', theme);
-  const icon   = document.getElementById('themeIcon');
-  const drawer = document.getElementById('drawerThemeBtn');
-  const meta   = document.getElementById('metaTheme');
-  if (icon)   icon.textContent   = theme === 'dark' ? '○' : '●';
-  if (drawer) drawer.textContent = theme === 'dark' ? '◑ Light' : '◑ Dark';
-  if (meta)   meta.setAttribute('content', theme === 'dark' ? '#111110' : '#f5f3ee');
-  const btn = document.getElementById('themeBtn');
-  if (btn) btn.setAttribute('title', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-}
-
-function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme') || 'light';
-  applyTheme(cur === 'dark' ? 'light' : 'dark');
-}
 
 function changeFontSize(dir) {
   fontIndex = Math.max(0, Math.min(FONT_STEPS.length - 1, fontIndex + dir));
@@ -45,10 +15,79 @@ function changeFontSize(dir) {
 }
 
 function applyFont() {
-  document.documentElement.setAttribute('data-font', FONT_STEPS[fontIndex]);
-  localStorage.setItem('dadada_font', FONT_STEPS[fontIndex]);
+  const step = FONT_STEPS[fontIndex];
+  const size = FONT_VALUES[step];
+
+  /* Set on <html> so all rem/em and CSS var(--t-*) cascade correctly */
+  document.documentElement.style.fontSize = size;
+
+  /* Also patch every CSS variable that controls type */
+  document.documentElement.style.setProperty('--t-xs',   size);
+  document.documentElement.style.setProperty('--t-sm',   size);
+  document.documentElement.style.setProperty('--t-base', size);
+
+  localStorage.setItem('dadada_font', step);
+
+  /* Show indicator toast */
+  showFontIndicator(FONT_LABELS[step]);
 }
 
+function showFontIndicator(label) {
+  let ind = document.getElementById('fontIndicator');
+  if (!ind) {
+    ind = document.createElement('div');
+    ind.id = 'fontIndicator';
+    ind.style.cssText = [
+      'position:fixed', 'bottom:24px', 'right:24px', 'z-index:9999',
+      'background:var(--ink)', 'color:var(--paper)',
+      'font-family:var(--font)', 'font-size:11px',
+      'letter-spacing:0.14em', 'text-transform:uppercase',
+      'padding:10px 18px', 'pointer-events:none',
+      'transition:opacity 0.3s', 'opacity:0'
+    ].join(';');
+    document.body.appendChild(ind);
+  }
+  ind.textContent = 'Font — ' + label;
+  ind.style.opacity = '1';
+  clearTimeout(ind._t);
+  ind._t = setTimeout(() => { ind.style.opacity = '0'; }, 1800);
+}
+
+/* ── THEME ── */
+function initTheme() {
+  /* Font */
+  const savedFont = localStorage.getItem('dadada_font');
+  if (savedFont) {
+    const idx = FONT_STEPS.indexOf(savedFont);
+    if (idx >= 0) fontIndex = idx;
+  }
+  applyFont();
+
+  /* Theme */
+  const saved = localStorage.getItem('dadada_theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('dadada_theme', theme);
+
+  const icon   = document.getElementById('themeIcon');
+  const drawer = document.getElementById('drawerThemeBtn');
+  const meta   = document.getElementById('metaTheme');
+  const btn    = document.getElementById('themeBtn');
+
+  if (icon)   icon.textContent = theme === 'dark' ? '○' : '●';
+  if (drawer) drawer.textContent = theme === 'dark' ? '◑ Light' : '◑ Dark';
+  if (meta)   meta.setAttribute('content', theme === 'dark' ? '#111110' : '#f5f3ee');
+  if (btn)    btn.setAttribute('title', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+}
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
 /* ── STATE ── */
 const State = {
   works:    [],
