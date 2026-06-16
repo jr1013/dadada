@@ -1,6 +1,7 @@
 /* ============================================================
    DADADA — dadada.in
    app.js — Site logic. No framework, no build step.
+   Copyright reserved to dadada.in
    ============================================================ */
 
 'use strict';
