@@ -6,10 +6,10 @@
   <meta name="description" content="dadada — experimental publishing platform for photo books, image essays and video works by independent artists.">
   <meta name="theme-color" content="#f5f3ee" id="metaTheme">
   <meta property="og:title" content="dadada — experimental publishing">
-  <meta property="og:description" content=" Photo books, image essays, and video works by independent artists.">
+  <meta property="og:description" content="Photo books, image essays and video works by independent artists.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://dadada.in">
-  <title>dadada — experimental publishing</title>
+  <title>..da..da..da.. — experimental publishing</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -35,29 +35,62 @@
   <a class="nav__logo" href="#home" onclick="showPage('home')">
     ..da..da..da.. <em>/ publishing</em>
   </a>
+
+  <!-- Desktop tabs — hidden on mobile -->
   <ul class="nav__tabs" role="list">
     <li><button class="nav__tab" data-page="home"      onclick="showPage('home')"      aria-current="page">Home</button></li>
     <li><button class="nav__tab" data-page="catalogue" onclick="showPage('catalogue')" aria-current="false">Catalogue</button></li>
     <li><button class="nav__tab" data-page="submit"    onclick="showPage('submit')"    aria-current="false">Submit</button></li>
     <li><button class="nav__tab" data-page="about"     onclick="showPage('about')"     aria-current="false">About</button></li>
   </ul>
+
+  <!-- Right side — always visible -->
   <div class="nav__right">
-    <input id="navSearch" class="nav__search" type="search" placeholder="Search… ( / )" aria-label="Search works" oninput="doSearch(this.value)">
+    <!-- Search always in header -->
+    <input id="navSearch" class="nav__search" type="search" placeholder="Search…" aria-label="Search works" oninput="doSearch(this.value)">
+
+    <!-- Font size — desktop only -->
     <div class="nav__font-ctrl">
       <button class="nav__ctrl-btn" onclick="changeFontSize(-1)" title="Smaller text" aria-label="Decrease font size">A−</button>
       <button class="nav__ctrl-btn" onclick="changeFontSize(1)"  title="Larger text"  aria-label="Increase font size">A+</button>
     </div>
+
+    <!-- Theme toggle — desktop only -->
     <button class="nav__theme-btn" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle dark/light mode">
       <span class="theme-icon" id="themeIcon">◑</span>
     </button>
+
+    <!-- Cart — always visible -->
     <button class="nav__cart" onclick="showPage('cart')" aria-label="View cart">
       Cart <span class="nav__cart-badge" id="cartBadge">0</span>
     </button>
+
+    <!-- Hamburger — mobile only -->
     <button class="nav__burger" id="navBurger" onclick="toggleDrawer()" aria-label="Toggle menu" aria-expanded="false" aria-controls="navDrawer">
       <span></span><span></span><span></span>
     </button>
   </div>
 </nav>
+
+<!-- MOBILE DRAWER — nav links + theme/font controls, NO search (it's in header) -->
+<div class="nav__drawer" id="navDrawer" hidden>
+  <button class="nav__drawer-link" data-page="home"      onclick="showPage('home');      closeDrawer()">Home</button>
+  <button class="nav__drawer-link" data-page="catalogue" onclick="showPage('catalogue'); closeDrawer()">Catalogue</button>
+  <button class="nav__drawer-link" data-page="submit"    onclick="showPage('submit');    closeDrawer()">Submit</button>
+  <button class="nav__drawer-link" data-page="about"     onclick="showPage('about');     closeDrawer()">About</button>
+  <button class="nav__drawer-link" onclick="showPage('cart'); closeDrawer()">
+    Cart <span id="drawerCartBadge" class="drawer-badge">0</span>
+  </button>
+  <!-- Font + theme controls inside drawer on mobile -->
+  <div class="nav__drawer-controls">
+    <button class="nav__drawer-ctrl" onclick="changeFontSize(-1)">A−</button>
+    <button class="nav__drawer-ctrl" onclick="changeFontSize(1)">A+</button>
+    <button class="nav__drawer-ctrl" id="drawerThemeBtn" onclick="toggleTheme()">◑ Dark</button>
+  </div>
+</div>
+
+<!-- BACKDROP -->
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
 
 <!-- MOBILE DRAWER -->
 <div class="nav__drawer" id="navDrawer" role="dialog" aria-label="Navigation menu" hidden>
