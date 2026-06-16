@@ -1,36 +1,20 @@
 /* ============================================================
    DADADA — dadada.in
    app.js — Site logic. No framework, no build step.
-   Works with HTML + works.json + config.json
    ============================================================ */
 
 'use strict';
 
-/* ── STATE ── */
-const State = {
-  works:    [],      // loaded from works.json
-  config:   {},      // loaded from config.json
-  cart:     JSON.parse(localStorage.getItem('dadada_cart') || '[]'),
-  page:     'home',  // current page slug
-  prevPage: 'home',
-  detail:   null,    // currently viewed work object
-  fmt:      { type: 'digital', price: 0 },
-  qty:      1,
-};
-/* ══════════════════════════════════════════
-   THEME & FONT SIZE
-══════════════════════════════════════════ */
+/* ── THEME & FONT SIZE ── */
 const FONT_STEPS = ['sm', 'md', 'lg', 'xl'];
-let fontIndex = 1; // default = 'md'
+let fontIndex = 1;
 
 function initTheme() {
-  // Respect saved preference, fall back to OS preference
   const saved = localStorage.getItem('dadada_theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const theme = saved || (prefersDark ? 'dark' : 'light');
   applyTheme(theme);
 
-  // Font size
   const savedFont = localStorage.getItem('dadada_font');
   if (savedFont) {
     fontIndex = FONT_STEPS.indexOf(savedFont);
@@ -42,17 +26,16 @@ function initTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('dadada_theme', theme);
-
-  // Update all toggle button labels
   const icon   = theme === 'dark' ? '○' : '●';
   const label  = theme === 'dark' ? '◑ Light' : '◑ Dark';
   const el     = document.getElementById('themeIcon');
   const drawer = document.getElementById('drawerThemeBtn');
   if (el)     el.textContent = icon;
   if (drawer) drawer.textContent = label;
-
   document.getElementById('themeBtn')
     ?.setAttribute('title', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+  const meta = document.getElementById('metaTheme');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#111110' : '#f5f3ee');
 }
 
 function toggleTheme() {
@@ -69,9 +52,22 @@ function applyFont() {
   document.documentElement.setAttribute('data-font', FONT_STEPS[fontIndex]);
   localStorage.setItem('dadada_font', FONT_STEPS[fontIndex]);
 }
+
+/* ── STATE ── */
+const State = {
+  works:    [],
+  config:   {},
+  cart:     JSON.parse(localStorage.getItem('dadada_cart') || '[]'),
+  page:     'home',
+  prevPage: 'home',
+  detail:   null,
+  fmt:      { type: 'digital', price: 0 },
+  qty:      1,
+};
+
 /* ── BOOTSTRAP ── */
 async function init() {
-	initTheme(); 
+  initTheme();
   try {
     const [worksRes, configRes] = await Promise.all([
       fetch('data/works.json'),
@@ -99,21 +95,19 @@ function routeFromHash() {
 }
 
 function showPage(id) {
-  // Hide all pages
   document.querySelectorAll('[data-page]').forEach(el => {
     el.hidden = (el.dataset.page !== id);
   });
-
-  // Update nav active state
   document.querySelectorAll('.nav__tab').forEach(btn => {
     btn.setAttribute('aria-current', btn.dataset.page === id ? 'page' : 'false');
   });
-
+  document.querySelectorAll('.nav__drawer-link[data-page]').forEach(b => {
+    b.setAttribute('aria-current', b.dataset.page === id ? 'page' : 'false');
+  });
   State.prevPage = State.page;
   State.page = id;
   location.hash = id;
   window.scrollTo(0, 0);
-
   if (id === 'cart') renderCart();
 }
 
@@ -137,7 +131,7 @@ function buildMarquee() {
   const items = State.works.map(w =>
     `<span class="marquee__item">${w.title} — ${w.artist}</span>`
   ).join('');
-  el.innerHTML = items + items; // doubled for seamless loop
+  el.innerHTML = items + items;
 }
 
 /* ── HOME: FEATURED ── */
@@ -217,12 +211,9 @@ function openDetail(id) {
   const w = State.works.find(x => x.id === id);
   if (!w) return;
   State.detail = w;
-
-  // Reset format state
   State.fmt = { type: 'digital', price: 0 };
   State.qty = 1;
 
-  // Thumbnail strip
   const thumbStrip = document.getElementById('detThumbs');
   thumbStrip.innerHTML = '';
   const plates = w.type === 'video'
@@ -235,16 +226,14 @@ function openDetail(id) {
     `);
   });
 
-  // Cover panel
   document.getElementById('detCoverMain').innerHTML = `
     <div>${w.title}<br><span style="font-size:8px;opacity:.4;letter-spacing:.06em">${w.artist}</span><br><span style="font-size:7px;opacity:.2">[cover image]</span></div>
   `;
 
-  // Format options
   const fmtOpts = [];
   fmtOpts.push(fmtOption('digital', 0, 'Read online', 'Full access in the book reader — free for everyone', true));
-  if (w.formats.pdf?.available)   fmtOpts.push(fmtOption('pdf',     w.formats.pdf.price,   'PDF download', 'Print-ready, high-res. Delivered by email.', false));
-  if (w.formats.print?.available) fmtOpts.push(fmtOption('print',   w.formats.print.price, 'Print edition', `${w.printRun || ''}`, false));
+  if (w.formats.pdf?.available)   fmtOpts.push(fmtOption('pdf',   w.formats.pdf.price,   'PDF download',  'Print-ready, high-res. Delivered by email.', false));
+  if (w.formats.print?.available) fmtOpts.push(fmtOption('print', w.formats.print.price, 'Print edition', `${w.printRun || ''}`, false));
 
   const metaRows = w.type === 'video'
     ? `<tr><td>Duration</td><td>${w.duration}</td></tr><tr><td>Language</td><td>${w.language}</td></tr><tr><td>Edition</td><td>${w.edition}</td></tr>`
@@ -263,10 +252,8 @@ function openDetail(id) {
     <div class="det__title">${w.title}</div>
     <div class="det__artist">${w.artist} · ${w.location} · ${w.year}</div>
     <div class="det__desc">${w.description}</div>
-
     <span class="det__section-label">Format</span>
     <div class="fmt-grid" id="fmtGrid">${fmtOpts.join('')}</div>
-
     <div class="qty-row" id="qtyRow" style="display:none">
       <span class="u-label">Qty</span>
       <div class="qty-ctrl">
@@ -275,13 +262,10 @@ function openDetail(id) {
         <button class="qty-btn" onclick="changeQty(1)" aria-label="Increase">+</button>
       </div>
     </div>
-
     <button class="btn-add-main" id="addBtn" onclick="addToCart()">Read online — free</button>
     ${w.preview ? `<button class="btn-preview" onclick="openReader('${w.id}')">Read a preview →</button>` : ''}
-
     <span class="det__section-label">Details</span>
     <table class="meta-table"><tbody>${metaRows}</tbody></table>
-
     <span class="det__section-label">Tags</span>
     <div class="tag-cloud">${tags}</div>
   `;
@@ -291,8 +275,7 @@ function openDetail(id) {
 
 function fmtOption(type, price, name, desc, selected) {
   return `
-    <button class="fmt-opt" aria-pressed="${selected}" data-fmt="${type}" data-price="${price}"
-      onclick="selectFmt(this)">
+    <button class="fmt-opt" aria-pressed="${selected}" data-fmt="${type}" data-price="${price}" onclick="selectFmt(this)">
       <div class="fmt-opt__name">${name}</div>
       <div class="fmt-opt__desc">${desc}</div>
       <div class="fmt-opt__price">${price === 0 ? 'Free' : currency(price)}</div>
@@ -303,15 +286,10 @@ function fmtOption(type, price, name, desc, selected) {
 function selectFmt(el) {
   document.querySelectorAll('.fmt-opt').forEach(b => b.setAttribute('aria-pressed', 'false'));
   el.setAttribute('aria-pressed', 'true');
-
-  State.fmt  = { type: el.dataset.fmt, price: parseInt(el.dataset.price) || 0 };
-  State.qty  = 1;
-
-  const qtyRow = document.getElementById('qtyRow');
-  const addBtn = document.getElementById('addBtn');
+  State.fmt = { type: el.dataset.fmt, price: parseInt(el.dataset.price) || 0 };
+  State.qty = 1;
   const isPrint = State.fmt.type === 'print';
-
-  qtyRow.style.display = isPrint ? 'flex' : 'none';
+  document.getElementById('qtyRow').style.display = isPrint ? 'flex' : 'none';
   document.getElementById('qtyVal').textContent = 1;
   updateAddBtn();
 }
@@ -326,11 +304,9 @@ function updateAddBtn() {
   const btn = document.getElementById('addBtn');
   if (!btn) return;
   const { type, price } = State.fmt;
-  if (price === 0) {
-    btn.textContent = 'Read online — free';
-  } else {
-    btn.textContent = `Add to cart — ${currency(price * State.qty)}`;
-  }
+  btn.textContent = price === 0
+    ? 'Read online — free'
+    : `Add to cart — ${currency(price * State.qty)}`;
 }
 
 function selectThumb(el, label, idx) {
@@ -347,29 +323,11 @@ function selectThumb(el, label, idx) {
 function addToCart() {
   if (!State.detail) return;
   const { type, price } = State.fmt;
-
-  if (price === 0) {
-    openReader(State.detail.id);
-    return;
-  }
-
+  if (price === 0) { openReader(State.detail.id); return; }
   const key = `${State.detail.id}::${type}`;
   const existing = State.cart.find(c => c.key === key);
-
-  if (existing) {
-    existing.qty += State.qty;
-  } else {
-    State.cart.push({
-      key,
-      id:     State.detail.id,
-      title:  State.detail.title,
-      artist: State.detail.artist,
-      fmt:    type,
-      price,
-      qty:    State.qty,
-    });
-  }
-
+  if (existing) { existing.qty += State.qty; }
+  else { State.cart.push({ key, id: State.detail.id, title: State.detail.title, artist: State.detail.artist, fmt: type, price, qty: State.qty }); }
   persistCart();
   updateCartBadge();
   toast(`"${State.detail.title}" added to cart`);
@@ -379,7 +337,7 @@ function quickAdd(id) {
   const w = State.works.find(x => x.id === id);
   if (!w) return;
   const price = w.formats.pdf?.price || w.formats.print?.price;
-  if (!price) { toast('Open to read online — it\'s free'); return; }
+  if (!price) { toast("Open to read online — it's free"); return; }
   const fmt = w.formats.pdf?.available ? 'pdf' : 'print';
   const key = `${w.id}::${fmt}`;
   const existing = State.cart.find(c => c.key === key);
@@ -393,18 +351,14 @@ function quickAdd(id) {
 function removeFromCart(key) {
   const idx = State.cart.findIndex(c => c.key === key);
   if (idx > -1) State.cart.splice(idx, 1);
-  persistCart();
-  updateCartBadge();
-  renderCart();
+  persistCart(); updateCartBadge(); renderCart();
 }
 
 function changeCartQty(key, delta) {
   const item = State.cart.find(c => c.key === key);
   if (!item) return;
   item.qty = Math.max(1, item.qty + delta);
-  persistCart();
-  updateCartBadge();
-  renderCart();
+  persistCart(); updateCartBadge(); renderCart();
 }
 
 function renderCart() {
@@ -420,7 +374,7 @@ function renderCart() {
         <button class="btn btn--light" onclick="showPage('catalogue')" style="margin-top:8px">Browse catalogue</button>
       </div>`;
     if (summaryEl) summaryEl.innerHTML = '';
-    if (totalEl)   totalEl.textContent = currency(0);
+    if (totalEl) totalEl.textContent = currency(0);
     return;
   }
 
@@ -432,7 +386,6 @@ function renderCart() {
     subtotal += line;
     const fmtLabel = { pdf: 'PDF download', print: 'Print edition', digital: 'Digital' }[item.fmt] || item.fmt;
     const isPrint  = item.fmt === 'print';
-
     itemsEl.insertAdjacentHTML('beforeend', `
       <div class="cart-row">
         <div class="cart-thumb">${item.title.charAt(0)}</div>
@@ -440,13 +393,7 @@ function renderCart() {
           <div class="cart-item__title">${item.title}</div>
           <div class="cart-item__by">${item.artist}</div>
           <span class="cart-item__fmt">${fmtLabel}</span>
-          ${isPrint ? `
-            <div class="cart-item__qty">
-              <button onclick="changeCartQty('${item.key}', -1)">−</button>
-              <span>${item.qty}</span>
-              <button onclick="changeCartQty('${item.key}', 1)">+</button>
-            </div>` : ''
-          }
+          ${isPrint ? `<div class="cart-item__qty"><button onclick="changeCartQty('${item.key}',-1)">−</button><span>${item.qty}</span><button onclick="changeCartQty('${item.key}',1)">+</button></div>` : ''}
           <button class="cart-remove" onclick="removeFromCart('${item.key}')">Remove</button>
         </div>
         <div class="cart-price">${currency(line)}</div>
@@ -466,23 +413,21 @@ function renderCart() {
   if (totalEl) totalEl.textContent = currency(total);
 }
 
-function persistCart() {
-  localStorage.setItem('dadada_cart', JSON.stringify(State.cart));
-}
+function persistCart() { localStorage.setItem('dadada_cart', JSON.stringify(State.cart)); }
 
 function updateCartBadge() {
+  const n = State.cart.reduce((s, c) => s + c.qty, 0);
   const badge = document.getElementById('cartBadge');
-  if (badge) badge.textContent = State.cart.reduce((s, c) => s + c.qty, 0);
+  const drawer = document.getElementById('drawerCartBadge');
+  if (badge)  badge.textContent  = n;
+  if (drawer) drawer.textContent = n;
 }
 
 /* ── BOOK READER ── */
 function openReader(id) {
   const w = State.works.find(x => x.id === id);
   if (!w) return;
-
-  const overlay = document.getElementById('reader');
   document.getElementById('readerTitle').textContent = `${w.title} — ${w.artist} · Preview`;
-
   const textCol = document.getElementById('readerText');
   textCol.innerHTML = (w.sections || []).map((s, i) => `
     <div class="reader__section ${i === 0 ? 'is-active' : ''}" data-idx="${i}">
@@ -490,19 +435,14 @@ function openReader(id) {
       <p>${s.body}</p>
     </div>
   `).join('');
-
-  overlay.classList.add('is-open');
-
-  // Scroll sync
+  document.getElementById('reader').classList.add('is-open');
   const sections = textCol.querySelectorAll('.reader__section');
   const imgEl    = document.getElementById('readerImage');
-
   textCol.addEventListener('scroll', () => {
     const mid = textCol.getBoundingClientRect().top + textCol.clientHeight * 0.4;
     let closest = 0, dist = Infinity;
     sections.forEach((s, i) => {
-      const r = s.getBoundingClientRect();
-      const d = Math.abs((r.top + r.height / 2) - mid);
+      const d = Math.abs((s.getBoundingClientRect().top + s.getBoundingClientRect().height / 2) - mid);
       if (d < dist) { dist = d; closest = i; }
     });
     sections.forEach((s, i) => s.classList.toggle('is-active', i === closest));
@@ -510,30 +450,18 @@ function openReader(id) {
   }, { passive: true });
 }
 
-function closeReader() {
-  document.getElementById('reader')?.classList.remove('is-open');
-}
+function closeReader() { document.getElementById('reader')?.classList.remove('is-open'); }
 
 /* ── SEARCH ── */
 function doSearch(query) {
   const q = query.trim().toLowerCase();
-
-  if (q.length < 2) {
-    if (State.page === 'search') showPage(State.prevPage);
-    return;
-  }
-
+  if (q.length < 2) { if (State.page === 'search') showPage(State.prevPage); return; }
   const results = State.works.filter(w =>
-    [w.title, w.artist, w.type, w.description, ...(w.tags || [])].some(s =>
-      s?.toLowerCase().includes(q)
-    )
+    [w.title, w.artist, w.type, w.description, ...(w.tags || [])].some(s => s?.toLowerCase().includes(q))
   );
-
   const header = document.getElementById('searchHeader');
   const list   = document.getElementById('searchResults');
-
   if (header) header.textContent = `${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`;
-
   if (list) {
     list.innerHTML = results.length ? results.map(w => {
       const paid = w.formats.pdf?.price || w.formats.print?.price;
@@ -545,11 +473,9 @@ function doSearch(query) {
             <div class="search-result-row__by">${w.artist} · ${w.year}</div>
           </div>
           <div class="search-result-row__price">${paid ? 'from ' + currency(paid) : 'Free'}</div>
-        </div>
-      `;
-    }).join('') : `<div style="padding:40px 24px;opacity:.4;font-size:11px;letter-spacing:.1em;text-transform:uppercase">Nothing found. Try a different search term.</div>`;
+        </div>`;
+    }).join('') : `<div style="padding:40px 24px;opacity:.4;font-size:11px;letter-spacing:.1em;text-transform:uppercase">Nothing found.</div>`;
   }
-
   showPage('search');
 }
 
@@ -559,14 +485,11 @@ function selectSubmitType(el) {
   el.setAttribute('aria-pressed', 'true');
 }
 
-function handleSubmit() {
-  toast('Submission received — we\'ll be in touch within 6 weeks');
-}
+function handleSubmit() { toast("Submission received — we'll be in touch within 6 weeks"); }
 
 /* ── CHECKOUT ── */
 function checkout() {
   if (!State.cart.length) return;
-  // In production: redirect to payment gateway (Razorpay, etc.)
   toast('Redirecting to checkout…');
 }
 
@@ -585,14 +508,42 @@ function toast(msg) {
   el._timer = setTimeout(() => el.classList.remove('is-visible'), 2400);
 }
 
+/* ── MOBILE DRAWER ── */
+function toggleDrawer() {
+  const drawer = document.getElementById('navDrawer');
+  drawer.classList.contains('is-open') ? closeDrawer() : openDrawer();
+}
+
+function openDrawer() {
+  const drawer = document.getElementById('navDrawer');
+  const burger = document.getElementById('navBurger');
+  const backdrop = document.getElementById('drawerBackdrop');
+  drawer.classList.add('is-open');
+  drawer.hidden = false;
+  burger?.classList.add('is-open');
+  burger?.setAttribute('aria-expanded', 'true');
+  backdrop?.classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  const drawer = document.getElementById('navDrawer');
+  const burger = document.getElementById('navBurger');
+  const backdrop = document.getElementById('drawerBackdrop');
+  drawer.classList.remove('is-open');
+  drawer.hidden = true;
+  burger?.classList.remove('is-open');
+  burger?.setAttribute('aria-expanded', 'false');
+  backdrop?.classList.remove('is-open');
+  document.body.style.overflow = '';
+}
+
 /* ── GLOBAL EVENTS ── */
 function bindGlobalEvents() {
-  // Keyboard shortcuts
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (document.getElementById('reader')?.classList.contains('is-open')) {
-        closeReader(); return;
-      }
+      if (document.getElementById('reader')?.classList.contains('is-open')) { closeReader(); return; }
+      if (document.getElementById('navDrawer')?.classList.contains('is-open')) { closeDrawer(); return; }
       if (State.page === 'detail') { goBack(); return; }
     }
     if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
@@ -600,8 +551,7 @@ function bindGlobalEvents() {
       document.getElementById('navSearch')?.focus();
     }
   });
-
-  // Handle back/forward navigation
+  window.addEventListener('resize', () => { if (window.innerWidth > 900) closeDrawer(); });
   window.addEventListener('hashchange', routeFromHash);
 }
 
