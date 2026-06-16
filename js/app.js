@@ -88,6 +88,7 @@ function toggleTheme() {
   const cur = document.documentElement.getAttribute('data-theme') || 'light';
   applyTheme(cur === 'dark' ? 'light' : 'dark');
 }
+
 /* ── STATE ── */
 const State = {
   works:    [],
