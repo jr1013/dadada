@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-font="md">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="dadada — experimental publishing platform for photo books, image essays and video works by independent artists.">
+  <meta name="theme-color" content="#f5f3ee" id="metaTheme">
+  <title>dadada — experimental publishing</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="font-indicator" id="fontIndicator"></div>
+
+<!-- READER OVERLAY -->
+<div class="reader" id="reader" role="dialog" aria-modal="true">
+  <div class="reader__nav">
+    <span class="reader__title" id="readerTitle"></span>
+    <button class="reader__close" onclick="closeReader()">Close ×</button>
+  </div>
+  <div class="reader__body">
+    <div class="reader__text" id="readerText"></div>
+    <div class="reader__image" id="readerImage">preview<br><span style="font-size:8px;opacity:.4">plate 1</span></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav__logo" href="#home" onclick="showPage('home')">dadada <em>/ publishing</em></a>
+  <ul class="nav__tabs">
+    <li><button class="nav__tab" data-page="home"      onclick="showPage('home')"      aria-current="page">Home</button></li>
+    <li><button class="nav__tab" data-page="catalogue" onclick="showPage('catalogue')" aria-current="false">Catalogue</button></li>
+    <li><button class="nav__tab" data-page="submit"    onclick="showPage('submit')"    aria-current="false">Submit</button></li>
+    <li><button class="nav__tab" data-page="about"     onclick="showPage('about')"     aria-current="false">About</button></li>
+  </ul>
+  <div class="nav__right">
+    <input id="navSearch" class="nav__search" type="search" placeholder="Search…" aria-label="Search" oninput="doSearch(this.value)">
+    <div class="nav__font-ctrl">
+      <button class="nav__ctrl-btn" onclick="changeFontSize(-1)" title="Smaller text">A−</button>
+      <button class="nav__ctrl-btn" onclick="changeFontSize(1)"  title="Larger text">A+</button>
+    </div>
+    <button class="nav__theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">
+      <span id="themeIcon">◑</span>
+    </button>
+    <button class="nav__cart" onclick="showPage('cart')">Cart <span class="nav__cart-badge" id="cartBadge">0</span></button>
+    <button class="nav__burger" id="navBurger" onclick="toggleDrawer()" aria-expanded="false" aria-controls="navDrawer">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE DRAWER -->
+<div class="nav__drawer" id="navDrawer" hidden>
+  <button class="nav__drawer-link" data-page="home"      onclick="showPage('home');      closeDrawer()">Home</button>
+  <button class="nav__drawer-link" data-page="catalogue" onclick="showPage('catalogue'); closeDrawer()">Catalogue</button>
+  <button class="nav__drawer-link" data-page="submit"    onclick="showPage('submit');    closeDrawer()">Submit</button>
+  <button class="nav__drawer-link" data-page="about"     onclick="showPage('about');     closeDrawer()">About</button>
+  <button class="nav__drawer-link" onclick="showPage('cart'); closeDrawer()">Cart <span id="drawerCartBadge" class="drawer-badge">0</span></button>
+  <div class="nav__drawer-controls">
+    <button class="nav__drawer-ctrl" onclick="changeFontSize(-1)">A−</button>
+    <button class="nav__drawer-ctrl" onclick="changeFontSize(1)">A+</button>
+    <button class="nav__drawer-ctrl" id="drawerThemeBtn" onclick="toggleTheme()">◑ Dark</button>
+  </div>
+</div>
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+
+<!-- PAGE: HOME -->
+<main data-page="home" class="page">
+  <section class="hero">
+    <div class="hero__left">
+      <h1 class="hero__h1">publish.<br>print.<br>collect.</h1>
+      <p class="hero__sub">Photo books · Image essays · Video works<br>Digital reads · Limited print editions</p>
+    </div>
+    <div class="hero__right">
+      <p class="hero__meta">dadada.in<br>Experimental publishing<br>for independent artists<br><br>No algorithms<br>No feeds<br>Only work</p>
+      <div class="hero__cta">
+        <button class="btn btn--light" onclick="showPage('submit')">Submit work</button>
+        <button class="btn btn--dark"  onclick="showPage('catalogue')">Browse →</button>
+      </div>
+    </div>
+  </section>
+  <div class="marquee" aria-hidden="true"><div class="marquee__inner" id="marqueeInner"></div></div>
+  <div class="featured" id="featuredRow"></div>
+  <section class="how">
+    <div class="how__col">
+      <p class="u-label" style="margin-bottom:18px">How it works</p>
+      <div class="how__step"><span class="how__n">01</span>Artist submits a photo book, image essay or video work</div>
+      <div class="how__step"><span class="how__n">02</span>Editorial review within 4–6 weeks</div>
+      <div class="how__step"><span class="how__n">03</span>Approved work published digitally on dadada.in</div>
+      <div class="how__step"><span class="how__n">04</span>Print edition produced on demand — artist sets the run</div>
+      <div class="how__step"><span class="how__n">05</span>Readers read online, buy print, or download PDF</div>
+    </div>
+    <div class="how__col">
+      <p class="u-label" style="margin-bottom:18px">Formats available</p>
+      <div class="how__format-card"><div class="how__format-name">Read online</div><div class="how__format-desc">Two-column book reader — free for all published works</div></div>
+      <div class="how__format-card"><div class="how__format-name">PDF download</div><div class="how__format-desc">Print-ready high-res file, priced by artist. Delivered by email.</div></div>
+      <div class="how__format-card"><div class="how__format-name">Print edition</div><div class="how__format-desc">Risograph or offset, limited numbered run. Ships 10–14 days.</div></div>
+    </div>
+  </section>
+  <footer class="site-footer"><span>dadada.in — experimental publishing</span><span>Photo books · Image essays · Video works</span></footer>
+</main>
+
+<!-- PAGE: CATALOGUE -->
+<main data-page="catalogue" class="page" hidden>
+  <div class="cat-bar">
+    <button class="cat-filter" aria-pressed="true"  onclick="filterCatalogue('all',this)">All</button>
+    <button class="cat-filter" aria-pressed="false" onclick="filterCatalogue('photo book',this)">Photo Books</button>
+    <button class="cat-filter" aria-pressed="false" onclick="filterCatalogue('image essay',this)">Image Essays</button>
+    <button class="cat-filter" aria-pressed="false" onclick="filterCatalogue('video',this)">Video</button>
+    <span class="cat-count" id="catCount" aria-live="polite"></span>
+  </div>
+  <div class="cat-grid" id="catGrid"></div>
+  <footer class="site-footer"><span>dadada.in</span><span id="catFooter"></span></footer>
+</main>
+
+<!-- PAGE: DETAIL -->
+<main data-page="detail" class="page" hidden>
+  <button class="det__back" onclick="goBack()">← Back</button>
+
+  <!-- Header: title, meta, format selection, buy buttons -->
+  <div class="det__header" id="detHeader"></div>
+
+  <!-- Chapter scroller: text scrolls, image is sticky and swaps per chapter -->
+  <div class="chapter-scroller" id="chapterScroller">
+    <div class="chapter-img-col">
+      <div class="chapter-img-stage" id="chapterImgStage">
+        <div class="chapter-img-placeholder" id="chapterImgPlaceholder">Cover</div>
+      </div>
+      <div class="chapter-img-counter" id="chapterImgCounter"></div>
+    </div>
+    <div class="chapter-text-col" id="chapterTextCol"></div>
+  </div>
+</main>
+
+<!-- PAGE: SUBMIT -->
+<main data-page="submit" class="page" hidden>
+  <div class="sub-layout">
+    <div class="sub-left">
+      <p class="u-label" style="margin-bottom:14px">Open call</p>
+      <span class="status-pill status-pill--open">Accepting submissions</span>
+      <h2>Submit<br>your work.</h2>
+      <p>dadada publishes photo books, image essays and video works by independent artists. We look for work that uses images — with or without text — in ways that resist easy categorisation.</p>
+      <p>No fees. Decisions within 6 weeks. Artist retains all rights. Revenue split 70 / 30 on print and PDF sales.</p>
+      <div style="margin-top:24px">
+        <p class="u-label" style="margin-bottom:10px">We publish</p>
+        <div class="criteria__item"><span class="criteria__dash">—</span>Photo books (sequence of images with or without text)</div>
+        <div class="criteria__item"><span class="criteria__dash">—</span>Image essays (images and text in dialogue)</div>
+        <div class="criteria__item"><span class="criteria__dash">—</span>Video works (single channel, up to 60 minutes)</div>
+        <div class="criteria__item"><span class="criteria__dash">—</span>Work at any stage of a practice</div>
+        <div class="criteria__item"><span class="criteria__dash">—</span>Work in any language</div>
+      </div>
+    </div>
+    <div class="sub-right">
+      <p class="u-label" style="margin-bottom:24px">Submission form</p>
+      <label class="form-label" for="sub-name">Your name</label>
+      <input class="form-field" id="sub-name" type="text" placeholder="—" autocomplete="name">
+      <label class="form-label" for="sub-email">Email</label>
+      <input class="form-field" id="sub-email" type="email" placeholder="—" autocomplete="email">
+      <label class="form-label" for="sub-title">Work title</label>
+      <input class="form-field" id="sub-title" type="text" placeholder="—">
+      <label class="form-label">Format</label>
+      <div class="radio-group">
+        <button class="radio-opt" aria-pressed="true"  onclick="selectSubmitType(this)">Photo book</button>
+        <button class="radio-opt" aria-pressed="false" onclick="selectSubmitType(this)">Image essay</button>
+        <button class="radio-opt" aria-pressed="false" onclick="selectSubmitType(this)">Video work</button>
+      </div>
+      <label class="form-label" for="sub-desc">What is this work about?</label>
+      <textarea class="form-field" id="sub-desc" rows="3" placeholder="—"></textarea>
+      <label class="form-label" for="sub-link">Link to work or portfolio</label>
+      <input class="form-field" id="sub-link" type="url" placeholder="—">
+      <label class="form-label">Interested in a print edition?</label>
+      <div class="radio-group radio-group--2col">
+        <button class="radio-opt" aria-pressed="true"  onclick="selectSubmitType(this)">Yes, definitely</button>
+        <button class="radio-opt" aria-pressed="false" onclick="selectSubmitType(this)">Not sure yet</button>
+      </div>
+      <button class="btn btn--dark btn--full" style="padding:15px;margin-top:8px" onclick="handleSubmit()">Send submission</button>
+    </div>
+  </div>
+</main>
+
+<!-- PAGE: ABOUT -->
+<main data-page="about" class="page" hidden>
+  <div class="about-layout">
+    <div class="about-left">
+      <p class="u-label" style="margin-bottom:28px">About dadada</p>
+      <h2 class="about-h2">A publishing<br>platform built<br>to last.</h2>
+      <div class="about-body">
+        <p>DADADA is a lightweight, self-hosted digital publishing platform for artists — built entirely with HTML, CSS, JavaScript and JSON. No database, no subscriptions, no algorithmic feed.</p>
+        <p>Designed with a quiet archival philosophy inspired by Indexhibit, Cargo, Are.na, Monoskop and artist books. Work published on dadada.in is designed to be readable and accessible for decades.</p>
+        <p>Artists retain all rights. Revenue split 70 / 30 in favour of the artist on all print and PDF sales.</p>
+        <p style="margin-top:24px;padding-top:24px;border-top:1px solid var(--mid)">Contact: <a href="mailto:publish@dadada.in" style="border-bottom:1px solid var(--mid)">publish@dadada.in</a></p>
+      </div>
+    </div>
+    <div class="about-right">
+      <p class="u-label" style="margin-bottom:20px">Print editions</p>
+      <p style="font-size:13px;line-height:1.9;opacity:.65;margin-bottom:20px">All print editions are produced on demand. Minimum run of 25 copies. Each copy numbered.</p>
+      <div class="print-specs">
+        <p class="print-specs__label">Typical specs</p>
+        <table><tbody>
+          <tr><td>Paper</td><td>Munken Lynx 100gsm</td></tr>
+          <tr><td>Cover</td><td>300gsm, uncoated</td></tr>
+          <tr><td>Binding</td><td>Saddle stitch or perfect bound</td></tr>
+          <tr><td>Sizes</td><td>A5, A4, or custom</td></tr>
+          <tr><td>Min. run</td><td>25 copies</td></tr>
+        </tbody></table>
+      </div>
+      <p class="u-label" style="margin-bottom:14px;margin-top:28px">Platform features</p>
+      <div class="features-list">
+        <div class="feature-item">Searchable catalogue by type and tag</div>
+        <div class="feature-item">Two-column book reader for online reading</div>
+        <div class="feature-item">PDF download (print-ready)</div>
+        <div class="feature-item">Print-on-demand with cart + checkout</div>
+        <div class="feature-item">Dark mode · font size A− / A+ controls</div>
+        <div class="feature-item">Offline access &amp; PWA support</div>
+        <div class="feature-item">Keyboard navigation throughout</div>
+        <div class="feature-item">No database · no subscriptions · self-hosted</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- PAGE: CART -->
+<main data-page="cart" class="page" hidden>
+  <div class="cart-layout">
+    <div class="cart-items">
+      <h1 class="cart-items__title">Your cart</h1>
+      <div id="cartItems"></div>
+    </div>
+    <div class="cart-summary">
+      <p class="cart-summary__title">Order summary</p>
+      <div id="cartSummary"></div>
+      <div class="summary-row summary-row--total"><span>Total</span><span id="cartTotal">₹0</span></div>
+      <button class="btn btn--dark btn--full" style="margin-top:20px;padding:15px" onclick="checkout()">Proceed to checkout →</button>
+      <p class="cart-note">Print editions ship 10–14 days from Bengaluru.<br>PDFs delivered by email after payment.</p>
+    </div>
+  </div>
+</main>
+
+<!-- PAGE: SEARCH -->
+<main data-page="search" class="page" hidden>
+  <div class="search-header" id="searchHeader" aria-live="polite"></div>
+  <div id="searchResults"></div>
+</main>
+
+<script src="js/app.js"></script>
+</body>
+</html>
