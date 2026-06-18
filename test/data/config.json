@@ -1,0 +1,16 @@
+{
+  "site": {
+    "name": "dadada",
+    "tagline": "experimental publishing platform",
+    "domain": "dadada.in",
+    "email": "publish@dadada.in",
+    "description": "A lightweight, self-hosted publishing platform for photo books, image essays and video works by independent artists.",
+    "established": "2024",
+    "revenueShare": "70/30 in favour of the artist",
+    "currency": "INR",
+    "currencySymbol": "₹",
+    "shipping": { "domestic": 150, "note": "Print editions ship within 10–14 days from Bengaluru." }
+  },
+  "submission": { "status": "open", "turnaround": "4–6 weeks", "fee": 0, "types": ["photo book", "image essay", "video"] },
+  "print": { "paper": "Munken Lynx 100gsm", "cover": "300gsm, uncoated", "binding": ["Saddle stitch", "Perfect bound"], "sizes": ["A5", "A4", "Custom"], "minimumRun": 25 }
+}
