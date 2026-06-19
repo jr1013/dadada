@@ -414,7 +414,15 @@ function restartRead() {
 function goBackToWork() {
   stopSpeaking();
   const id = ReadState.work?.id;
-  location.href = id ? `index.html#detail?work=${id}` : 'index.html';
+  if (id) {
+    /* Store the work id so index.html can open the right detail page on load */
+    sessionStorage.setItem('dadada_return_work', id);
+    /* Navigate back — use relative path that works in any subfolder (e.g. /test/) */
+    const base = location.pathname.replace('read.html', 'index.html');
+    location.href = base + '#detail';
+  } else {
+    location.href = location.pathname.replace('read.html', 'index.html');
+  }
 }
 
 /* ══════════════════════════════════════
