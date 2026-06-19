@@ -38,12 +38,28 @@ async function init() {
     return;
   }
 
-  renderStartOverlay();
+  /* Populate end screen title */
+  document.getElementById('endTitle').textContent = ReadState.work.title;
+
   buildChapterIndex();
   buildStage();
+
+  /* Skip the start overlay — open directly in manual mode */
+  const startEl = document.getElementById('readStart');
+  if (startEl) startEl.style.display = 'none';
+
+  setMode('manual');
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      buildChapters();
+      bindManualScrollWatcher();
+      speakChapter(0);
+    });
+  });
 }
 
-/* ── START OVERLAY ── */
+/* ── START OVERLAY ── 
 function renderStartOverlay() {
   const w = ReadState.work;
   document.getElementById('startType').textContent   = w.type;
@@ -69,7 +85,7 @@ function beginRead() {
     bindManualScrollWatcher();
     speakChapter(0);
   }
-}
+} */
 
 /* ── MODE SWITCHING ── */
 function setMode(mode) {
