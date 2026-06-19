@@ -11,14 +11,13 @@
    STATE
 ══════════════════════════════════════ */
 const ReadState = {
-  work:        null,
-  mode:        'manual',   // 'manual' | 'auto'
-  voiceOn:     true,
-  speaking:    false,
-  paused:      false,
-  chapterIdx:  0,
-  utterance:   null,
-  words:       [],         // per-chapter word span elements, rebuilt each chapter
+  work:          null,
+  mode:          'manual',
+  voiceOn:       true,
+  speaking:      false,
+  paused:        false,
+  chapterIdx:    0,
+  utterance:     null,
   scrollHandler: null,
 };
 
@@ -54,11 +53,11 @@ async function init() {
 ══════════════════════════════════════ */
 function renderStartOverlay() {
   const w = ReadState.work;
-  document.getElementById('startType').textContent   = w.type;
-  document.getElementById('startTitle').textContent   = w.title;
-  document.getElementById('startArtist').textContent  = `${w.artist} · ${w.location} · ${w.year}`;
-  document.getElementById('startDesc').textContent    = w.description;
-  document.getElementById('endTitle').textContent     = w.title;
+  document.getElementById('startType').textContent  = w.type;
+  document.getElementById('startTitle').textContent  = w.title;
+  document.getElementById('startArtist').textContent = `${w.artist} · ${w.location} · ${w.year}`;
+  document.getElementById('startDesc').textContent   = w.description;
+  document.getElementById('endTitle').textContent    = w.title;
 }
 
 function chooseStartMode(mode) {
@@ -68,14 +67,14 @@ function chooseStartMode(mode) {
 }
 
 function beginRead() {
-  setMode(ReadState.mode); // sync the in-reader tabs to whatever was chosen on start screen
+  setMode(ReadState.mode);
   document.getElementById('readStart').classList.add('is-hidden');
   buildChapters();
   if (ReadState.mode === 'auto') {
     startAutoChapter(0);
   } else {
     bindManualScrollWatcher();
-    speakChapter(0); // read the first chapter immediately since it's already in view
+    speakChapter(0);
   }
 }
 
@@ -111,7 +110,9 @@ function buildStage() {
   const plates = w.plates || [];
 
   frame.innerHTML = plates.length
-    ? plates.map((src, i) => `<img src="${src}" alt="Plate ${i+1}" class="read-stage__img ${i===0?'is-active':''}" data-idx="${i}">`).join('')
+    ? plates.map((src, i) =>
+        `<img src="${src}" alt="Plate ${i+1}" class="read-stage__img ${i===0?'is-active':''}" data-idx="${i}">`
+      ).join('')
     : `<div class="read-stage__placeholder">${w.title}</div>`;
 
   const dots = document.getElementById('stageDots');
@@ -139,19 +140,19 @@ function setActivePlate(idx) {
 function updateStageCaption(idx) {
   const w = ReadState.work;
   const cap = document.getElementById('stageCaption');
-  cap.textContent = `${w.title}, plate ${idx + 1} — ${w.artist}, ${w.year}`;
+  if (cap) cap.textContent = `${w.title}, plate ${idx + 1} — ${w.artist}, ${w.year}`;
 }
 
 function jumpToPlate(idx) {
-  /* Manual click on a dot — jump the chapter whose plate matches, if one exists */
   const w = ReadState.work;
-  const chapterIdx = (w.sections || []).findIndex((_, i) => (i % (w.plates.length || 1)) === idx);
+  const plateLen = (w.plates || []).length || 1;
+  const chapterIdx = (w.sections || []).findIndex((_, i) => (i % plateLen) === idx);
   if (chapterIdx > -1) {
     if (ReadState.mode === 'auto') {
       startAutoChapter(chapterIdx);
     } else {
-      const block = document.querySelector(`.read-chapter[data-idx="${chapterIdx}"]`);
-      block?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelector(`.read-chapter[data-idx="${chapterIdx}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   } else {
     setActivePlate(idx);
@@ -159,7 +160,7 @@ function jumpToPlate(idx) {
 }
 
 /* ══════════════════════════════════════
-   CHAPTER INDEX (jump nav strip)
+   CHAPTER INDEX
 ══════════════════════════════════════ */
 function buildChapterIndex() {
   const w = ReadState.work;
@@ -173,8 +174,8 @@ function jumpToChapter(idx) {
   if (ReadState.mode === 'auto') {
     startAutoChapter(idx);
   } else {
-    const block = document.querySelector(`.read-chapter[data-idx="${idx}"]`);
-    block?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelector(`.read-chapter[data-idx="${idx}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
@@ -185,12 +186,13 @@ function updateChapterIndexHighlight(idx) {
 }
 
 function toRoman(num) {
-  const romans = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
+  const romans = ['I','II','III','IV','V','VI','VII','VIII','IX','X',
+                  'XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
   return romans[num - 1] || num;
 }
 
 /* ══════════════════════════════════════
-   BUILD CHAPTER TEXT (word-spans for highlight)
+   BUILD CHAPTERS (word spans for highlight)
 ══════════════════════════════════════ */
 function buildChapters() {
   const w = ReadState.work;
@@ -218,8 +220,7 @@ function wrapWords(text, chapterIdx) {
 }
 
 /* ══════════════════════════════════════
-   MANUAL MODE — scroll-triggered chapter
-   activation + voice reads on entry
+   MANUAL MODE
 ══════════════════════════════════════ */
 function bindManualScrollWatcher() {
   const track = document.getElementById('textTrack');
@@ -240,19 +241,15 @@ function bindManualScrollWatcher() {
 
     if (activeIdx !== ReadState.chapterIdx) {
       ReadState.chapterIdx = activeIdx;
-      const plateIdx = parseInt(blocks[activeIdx].dataset.plate || 0);
-      setActivePlate(plateIdx);
+      setActivePlate(parseInt(blocks[activeIdx].dataset.plate || 0));
       updateChapterIndexHighlight(activeIdx);
       speakChapter(activeIdx);
     }
 
-    /* End-of-essay check */
     const lastBlock = blocks[blocks.length - 1];
     if (lastBlock) {
       const lastRect = lastBlock.getBoundingClientRect();
-      if (lastRect.bottom <= rect.top + rect.height * 0.6) {
-        showEndOverlay();
-      }
+      if (lastRect.bottom <= rect.top + rect.height * 0.6) showEndOverlay();
     }
   }
 
@@ -261,7 +258,7 @@ function bindManualScrollWatcher() {
 }
 
 /* ══════════════════════════════════════
-   AUTO MODE — narration drives advancement
+   AUTO MODE
 ══════════════════════════════════════ */
 function startAutoChapter(idx) {
   const blocks = document.querySelectorAll('.read-chapter');
@@ -271,12 +268,10 @@ function startAutoChapter(idx) {
   blocks.forEach((b, i) => b.classList.toggle('is-active', i === idx));
   blocks[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  const plateIdx = parseInt(blocks[idx].dataset.plate || 0);
-  setActivePlate(plateIdx);
+  setActivePlate(parseInt(blocks[idx].dataset.plate || 0));
   updateChapterIndexHighlight(idx);
   updateAutoTime();
-
-  speakChapter(idx, /* autoAdvance */ true);
+  speakChapter(idx, true);
 }
 
 function nextChapter() { startAutoChapter(ReadState.chapterIdx + 1); }
@@ -299,8 +294,10 @@ function togglePlay() {
 
 function updateAutoTime() {
   const total = document.querySelectorAll('.read-chapter').length;
-  document.getElementById('autoTime').textContent = `${ReadState.chapterIdx + 1} / ${total}`;
-  document.getElementById('progressFill').style.width = `${((ReadState.chapterIdx + 1) / total) * 100}%`;
+  const fill  = document.getElementById('progressFill');
+  const time  = document.getElementById('autoTime');
+  if (time) time.textContent = `${ReadState.chapterIdx + 1} / ${total}`;
+  if (fill) fill.style.width = `${((ReadState.chapterIdx + 1) / total) * 100}%`;
 }
 
 /* ══════════════════════════════════════
@@ -309,10 +306,7 @@ function updateAutoTime() {
 function speakChapter(idx, autoAdvance) {
   stopSpeaking();
   if (!ReadState.voiceOn) {
-    if (autoAdvance) {
-      /* No voice — still advance after a fixed dwell time so auto mode keeps moving */
-      ReadState._dwellTimer = setTimeout(() => nextChapter(), 4500);
-    }
+    if (autoAdvance) ReadState._dwellTimer = setTimeout(() => nextChapter(), 4500);
     return;
   }
 
@@ -320,19 +314,16 @@ function speakChapter(idx, autoAdvance) {
   if (!body) return;
 
   const utter = new SpeechSynthesisUtterance(body);
-  utter.rate = 0.95;
+  utter.rate  = 0.95;
   utter.pitch = 1.0;
 
   const wordEls = document.querySelectorAll(`.read-word[data-chapter="${idx}"]`);
-  /* Track char offsets to map onboundary events to word indices */
   const words = body.split(/\s+/);
-  let charOffsets = [];
-  let pos = 0;
+  let charOffsets = [], pos = 0;
   words.forEach(w => { charOffsets.push(pos); pos += w.length + 1; });
 
   utter.onboundary = (e) => {
     if (e.name !== 'word') return;
-    /* Find the word whose offset is closest to e.charIndex */
     let wordIdx = 0;
     for (let i = 0; i < charOffsets.length; i++) {
       if (charOffsets[i] <= e.charIndex) wordIdx = i; else break;
@@ -348,24 +339,21 @@ function speakChapter(idx, autoAdvance) {
     wordEls.forEach(el => { el.classList.remove('is-current'); el.classList.add('is-spoken'); });
     const playBtn = document.getElementById('playBtn');
     if (playBtn) playBtn.textContent = '▶';
-    if (autoAdvance) {
-      setTimeout(() => nextChapter(), 600);
-    }
+    if (autoAdvance) setTimeout(() => nextChapter(), 600);
   };
 
-  ReadState.speaking = true;
-  ReadState.paused = false;
+  ReadState.speaking  = true;
+  ReadState.paused    = false;
   ReadState.utterance = utter;
   const playBtn = document.getElementById('playBtn');
   if (playBtn) playBtn.textContent = '❙❙';
-
   synth.speak(utter);
 }
 
 function stopSpeaking() {
   if (synth.speaking || synth.pending) synth.cancel();
   ReadState.speaking = false;
-  ReadState.paused = false;
+  ReadState.paused   = false;
   if (ReadState._dwellTimer) { clearTimeout(ReadState._dwellTimer); ReadState._dwellTimer = null; }
 }
 
@@ -376,14 +364,16 @@ function toggleVoice() {
   const btn   = document.getElementById('voiceBtn');
 
   if (ReadState.voiceOn) {
-    icon.textContent = '🔊'; label.textContent = 'Voice on'; btn.classList.remove('is-muted');
+    if (icon)  icon.textContent  = '🔊';
+    if (label) label.textContent = 'Voice on';
+    btn?.classList.remove('is-muted');
     speakChapter(ReadState.chapterIdx, ReadState.mode === 'auto');
   } else {
-    icon.textContent = '🔇'; label.textContent = 'Voice off'; btn.classList.add('is-muted');
+    if (icon)  icon.textContent  = '🔇';
+    if (label) label.textContent = 'Voice off';
+    btn?.classList.add('is-muted');
     stopSpeaking();
-    if (ReadState.mode === 'auto') {
-      ReadState._dwellTimer = setTimeout(() => nextChapter(), 4500);
-    }
+    if (ReadState.mode === 'auto') ReadState._dwellTimer = setTimeout(() => nextChapter(), 4500);
   }
 }
 
@@ -409,33 +399,46 @@ function restartRead() {
 }
 
 /* ══════════════════════════════════════
-   NAVIGATION
+   NAVIGATION — THE FIX
+   
+   Old code built: index.html#detail?work=54-rooms
+   That hash doesn't match any [data-page] element
+   in index.html so the router showed a blank page.
+
+   New approach:
+   1. Store the work id in sessionStorage
+   2. Navigate to index.html with just #detail as the hash
+   3. app.js routeFromHash() sees #detail, checks
+      sessionStorage, finds the id, calls openDetail()
 ══════════════════════════════════════ */
 function goBackToWork() {
   stopSpeaking();
   const id = ReadState.work?.id;
+
   if (id) {
-    /* Store the work id so index.html can open the right detail page on load */
+    /* Tell index.html which work to open when it loads */
     sessionStorage.setItem('dadada_return_work', id);
-    /* Navigate back — use relative path that works in any subfolder (e.g. /test/) */
-    const base = location.pathname.replace('read.html', 'index.html');
-    location.href = base + '#detail';
-  } else {
-    location.href = location.pathname.replace('read.html', 'index.html');
   }
+
+  /* Build the correct path back to index.html from wherever
+     read.html lives (handles /test/ subfolders correctly) */
+  const indexPath = location.href
+    .split('?')[0]                     /* strip ?work=... */
+    .replace(/read\.html$/, 'index.html');
+
+  location.href = indexPath + '#detail';
 }
 
 /* ══════════════════════════════════════
    KEYBOARD
 ══════════════════════════════════════ */
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') goBackToWork();
-  if (e.key === ' ' && ReadState.mode === 'auto') { e.preventDefault(); togglePlay(); }
+  if (e.key === 'Escape')                            goBackToWork();
+  if (e.key === ' ' && ReadState.mode === 'auto')  { e.preventDefault(); togglePlay(); }
   if (e.key === 'ArrowRight' && ReadState.mode === 'auto') nextChapter();
   if (e.key === 'ArrowLeft'  && ReadState.mode === 'auto') prevChapter();
 });
 
-/* Stop any speech if the tab is closed/hidden to avoid orphaned audio */
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) stopSpeaking();
 });
