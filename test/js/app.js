@@ -110,14 +110,41 @@ async function init() {
   updateCartBadge();
   bindGlobalEvents();
   routeFromHash();
+   
+     /* Open any detail page that was pending until works finished loading */
+  if (State._pendingDetailId) {
+    const id = State._pendingDetailId;
+    State._pendingDetailId = null;
+    openDetail(id);
+  }
 }
 
 /* ══════════════════════════════════════
    ROUTING
 ══════════════════════════════════════ */
 function routeFromHash() {
-  const hash = location.hash.replace('#', '') || 'home';
-  showPage(hash);
+  const raw  = location.hash.replace('#', '') || 'home';
+  const page = raw.split('?')[0]; /* strip any ?work= that arrives via direct link */
+
+  /* Return from narrator (read.html) — sessionStorage holds the work id */
+  if (page === 'detail') {
+    const returnId = sessionStorage.getItem('dadada_return_work');
+    if (returnId) {
+      sessionStorage.removeItem('dadada_return_work');
+      /* Works load asynchronously — store id and open after init() completes */
+      State._pendingDetailId = returnId;
+      return;
+    }
+    /* Direct deep-link: index.html#detail?work=54-rooms */
+    const params = new URLSearchParams(raw.split('?')[1] || '');
+    const workId = params.get('work');
+    if (workId) {
+      State._pendingDetailId = workId;
+      return;
+    }
+  }
+
+  showPage(page);
 }
 
 function showPage(id) {
