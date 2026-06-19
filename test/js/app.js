@@ -111,7 +111,7 @@ async function init() {
   bindGlobalEvents();
   routeFromHash();
    
-     /* Open any detail page that was pending until works finished loading */
+  /* Open any detail page that was set before works JSON finished loading */
   if (State._pendingDetailId) {
     const id = State._pendingDetailId;
     State._pendingDetailId = null;
@@ -124,18 +124,17 @@ async function init() {
 ══════════════════════════════════════ */
 function routeFromHash() {
   const raw  = location.hash.replace('#', '') || 'home';
-  const page = raw.split('?')[0]; /* strip any ?work= that arrives via direct link */
+  const page = raw.split('?')[0]; /* strip any ?work= from direct links */
 
-  /* Return from narrator (read.html) — sessionStorage holds the work id */
   if (page === 'detail') {
+    /* Case 1: returning from narrator — id stored in sessionStorage */
     const returnId = sessionStorage.getItem('dadada_return_work');
     if (returnId) {
       sessionStorage.removeItem('dadada_return_work');
-      /* Works load asynchronously — store id and open after init() completes */
       State._pendingDetailId = returnId;
-      return;
+      return; /* openDetail() runs after works load in init() */
     }
-    /* Direct deep-link: index.html#detail?work=54-rooms */
+    /* Case 2: direct deep-link e.g. index.html#detail?work=54-rooms */
     const params = new URLSearchParams(raw.split('?')[1] || '');
     const workId = params.get('work');
     if (workId) {
