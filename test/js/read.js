@@ -1,15 +1,11 @@
 /* ============================================================
    DADADA — read.js
    Cinematic / narrated reading mode for image essays.
-   Browser TTS (SpeechSynthesis API) + word-level highlight,
-   synced image changes, two modes: manual scroll / auto-advance.
-   No framework, no build step.
+   Browser TTS + word-level highlight, synced image changes.
+   Two modes: manual scroll / auto-advance.
    ============================================================ */
 'use strict';
 
-/* ══════════════════════════════════════
-   STATE
-══════════════════════════════════════ */
 const ReadState = {
   work:          null,
   mode:          'manual',
@@ -23,9 +19,7 @@ const ReadState = {
 
 const synth = window.speechSynthesis;
 
-/* ══════════════════════════════════════
-   BOOTSTRAP
-══════════════════════════════════════ */
+/* ── BOOTSTRAP ── */
 async function init() {
   const params = new URLSearchParams(location.search);
   const id = params.get('work');
@@ -39,7 +33,8 @@ async function init() {
   }
 
   if (!ReadState.work) {
-    document.getElementById('stagePlaceholder').textContent = 'Work not found';
+    const ph = document.getElementById('stagePlaceholder');
+    if (ph) ph.textContent = 'Work not found';
     return;
   }
 
@@ -48,12 +43,10 @@ async function init() {
   buildStage();
 }
 
-/* ══════════════════════════════════════
-   START OVERLAY
-══════════════════════════════════════ */
+/* ── START OVERLAY ── */
 function renderStartOverlay() {
   const w = ReadState.work;
-  document.getElementById('startType').textContent  = w.type;
+  document.getElementById('startType').textContent   = w.type;
   document.getElementById('startTitle').textContent  = w.title;
   document.getElementById('startArtist').textContent = `${w.artist} · ${w.location} · ${w.year}`;
   document.getElementById('startDesc').textContent   = w.description;
@@ -78,9 +71,7 @@ function beginRead() {
   }
 }
 
-/* ══════════════════════════════════════
-   MODE SWITCHING
-══════════════════════════════════════ */
+/* ── MODE SWITCHING ── */
 function setMode(mode) {
   ReadState.mode = mode;
   document.getElementById('tabManual').setAttribute('aria-pressed', mode === 'manual');
@@ -101,9 +92,7 @@ function setMode(mode) {
   }
 }
 
-/* ══════════════════════════════════════
-   STAGE (image side)
-══════════════════════════════════════ */
+/* ── STAGE (image side) ── */
 function buildStage() {
   const w = ReadState.work;
   const frame = document.getElementById('stageFrame');
@@ -125,9 +114,7 @@ function buildStage() {
 
 function setActivePlate(idx) {
   const w = ReadState.work;
-  const plateCount = (w.plates || []).length || 1;
-  const safeIdx = Math.min(idx, plateCount - 1);
-
+  const safeIdx = Math.min(idx, Math.max((w.plates||[]).length - 1, 0));
   document.querySelectorAll('.read-stage__img').forEach(img =>
     img.classList.toggle('is-active', parseInt(img.dataset.idx) === safeIdx)
   );
@@ -159,9 +146,7 @@ function jumpToPlate(idx) {
   }
 }
 
-/* ══════════════════════════════════════
-   CHAPTER INDEX
-══════════════════════════════════════ */
+/* ── CHAPTER INDEX ── */
 function buildChapterIndex() {
   const w = ReadState.work;
   const el = document.getElementById('chapterIndex');
@@ -186,14 +171,12 @@ function updateChapterIndexHighlight(idx) {
 }
 
 function toRoman(num) {
-  const romans = ['I','II','III','IV','V','VI','VII','VIII','IX','X',
-                  'XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
-  return romans[num - 1] || num;
+  const r = ['I','II','III','IV','V','VI','VII','VIII','IX','X',
+             'XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
+  return r[num - 1] || num;
 }
 
-/* ══════════════════════════════════════
-   BUILD CHAPTERS (word spans for highlight)
-══════════════════════════════════════ */
+/* ── BUILD CHAPTERS (word spans for highlight) ── */
 function buildChapters() {
   const w = ReadState.work;
   const track = document.getElementById('textTrack');
@@ -219,9 +202,7 @@ function wrapWords(text, chapterIdx) {
   ).join(' ');
 }
 
-/* ══════════════════════════════════════
-   MANUAL MODE
-══════════════════════════════════════ */
+/* ── MANUAL MODE ── */
 function bindManualScrollWatcher() {
   const track = document.getElementById('textTrack');
   if (ReadState.scrollHandler) track.removeEventListener('scroll', ReadState.scrollHandler);
@@ -248,8 +229,8 @@ function bindManualScrollWatcher() {
 
     const lastBlock = blocks[blocks.length - 1];
     if (lastBlock) {
-      const lastRect = lastBlock.getBoundingClientRect();
-      if (lastRect.bottom <= rect.top + rect.height * 0.6) showEndOverlay();
+      const lr = lastBlock.getBoundingClientRect();
+      if (lr.bottom <= rect.top + rect.height * 0.6) showEndOverlay();
     }
   }
 
@@ -257,9 +238,7 @@ function bindManualScrollWatcher() {
   track.addEventListener('scroll', update, { passive: true });
 }
 
-/* ══════════════════════════════════════
-   AUTO MODE
-══════════════════════════════════════ */
+/* ── AUTO MODE ── */
 function startAutoChapter(idx) {
   const blocks = document.querySelectorAll('.read-chapter');
   if (!blocks.length || idx >= blocks.length) { showEndOverlay(); return; }
@@ -282,11 +261,11 @@ function togglePlay() {
   if (ReadState.speaking && !ReadState.paused) {
     synth.pause();
     ReadState.paused = true;
-    btn.textContent = '▶';
+    if (btn) btn.textContent = '▶';
   } else if (ReadState.paused) {
     synth.resume();
     ReadState.paused = false;
-    btn.textContent = '❙❙';
+    if (btn) btn.textContent = '❙❙';
   } else {
     startAutoChapter(ReadState.chapterIdx);
   }
@@ -300,9 +279,7 @@ function updateAutoTime() {
   if (fill) fill.style.width = `${((ReadState.chapterIdx + 1) / total) * 100}%`;
 }
 
-/* ══════════════════════════════════════
-   SPEECH SYNTHESIS + WORD HIGHLIGHT
-══════════════════════════════════════ */
+/* ── SPEECH SYNTHESIS + WORD HIGHLIGHT ── */
 function speakChapter(idx, autoAdvance) {
   stopSpeaking();
   if (!ReadState.voiceOn) {
@@ -377,9 +354,7 @@ function toggleVoice() {
   }
 }
 
-/* ══════════════════════════════════════
-   END OVERLAY
-══════════════════════════════════════ */
+/* ── END OVERLAY ── */
 function showEndOverlay() {
   stopSpeaking();
   document.getElementById('readEnd').classList.add('is-visible');
@@ -399,44 +374,42 @@ function restartRead() {
 }
 
 /* ══════════════════════════════════════
-   NAVIGATION — THE FIX
-   
-   Old code built: index.html#detail?work=54-rooms
-   That hash doesn't match any [data-page] element
-   in index.html so the router showed a blank page.
+   NAVIGATION — FIXED
 
-   New approach:
-   1. Store the work id in sessionStorage
-   2. Navigate to index.html with just #detail as the hash
-   3. app.js routeFromHash() sees #detail, checks
-      sessionStorage, finds the id, calls openDetail()
+   OLD (broken):
+     location.href = 'index.html#detail?work=54-rooms'
+     → router did showPage('detail?work=54-rooms')
+     → no matching [data-page] element → blank screen
+
+   NEW (correct):
+     1. Store work id in sessionStorage
+     2. Navigate to index.html#detail (clean hash)
+     3. app.js routeFromHash() checks sessionStorage,
+        waits for works to load, calls openDetail(id)
 ══════════════════════════════════════ */
 function goBackToWork() {
   stopSpeaking();
   const id = ReadState.work?.id;
 
   if (id) {
-    /* Tell index.html which work to open when it loads */
     sessionStorage.setItem('dadada_return_work', id);
   }
 
-  /* Build the correct path back to index.html from wherever
-     read.html lives (handles /test/ subfolders correctly) */
+  /* Derive the index.html path relative to wherever read.html lives.
+     Works in any subfolder e.g. /test/, /v2/, root, etc. */
   const indexPath = location.href
-    .split('?')[0]                     /* strip ?work=... */
+    .split('?')[0]
     .replace(/read\.html$/, 'index.html');
 
   location.href = indexPath + '#detail';
 }
 
-/* ══════════════════════════════════════
-   KEYBOARD
-══════════════════════════════════════ */
+/* ── KEYBOARD ── */
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape')                            goBackToWork();
-  if (e.key === ' ' && ReadState.mode === 'auto')  { e.preventDefault(); togglePlay(); }
-  if (e.key === 'ArrowRight' && ReadState.mode === 'auto') nextChapter();
-  if (e.key === 'ArrowLeft'  && ReadState.mode === 'auto') prevChapter();
+  if (e.key === 'Escape')                                   goBackToWork();
+  if (e.key === ' ' && ReadState.mode === 'auto')          { e.preventDefault(); togglePlay(); }
+  if (e.key === 'ArrowRight' && ReadState.mode === 'auto')  nextChapter();
+  if (e.key === 'ArrowLeft'  && ReadState.mode === 'auto')  prevChapter();
 });
 
 document.addEventListener('visibilitychange', () => {
