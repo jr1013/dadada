@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dadada — flipbook</title>
+  <link rel="stylesheet" href="css/flipbook.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+</head>
+<body>
+
+<div class="fb-loading" id="fbLoading">
+  <div class="fb-loading__inner">
+    <div class="fb-loading__title" id="fbLoadTitle">Opening book…</div>
+    <div class="fb-loading__sub"   id="fbLoadSub"></div>
+  </div>
+</div>
+
+<div class="fb-overlay" id="fbOverlay">
+
+  <div class="fb-bar">
+    <button class="fb-bar__back"  onclick="goBack()">← Back</button>
+    <div class="fb-bar__title" id="fbBarTitle"></div>
+    <div class="fb-bar__right">
+      <button class="fb-bar__btn" id="fbAutoBtn"  onclick="toggleAuto()"       title="Auto-flip">⏵ Auto</button>
+      <button class="fb-bar__btn" id="fbThumbBtn" onclick="toggleThumbs()"     title="Pages">⊞ Pages</button>
+      <button class="fb-bar__btn" id="fbFsBtn"    onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+      <button class="fb-bar__close"               onclick="goBack()"           title="Close">×</button>
+    </div>
+  </div>
+
+  <div class="fb-stage" id="fbStage">
+    <button class="fb-arrow fb-arrow--prev" id="arrowPrev" onclick="flipPrev()" aria-label="Previous page">‹</button>
+    <div id="flipbook"></div>
+    <button class="fb-arrow fb-arrow--next" id="arrowNext" onclick="flipNext()" aria-label="Next page">›</button>
+    <div class="fb-counter" id="fbCounter"></div>
+    <div class="fb-hint"    id="fbHint">Click arrows or drag page corners to turn</div>
+  </div>
+
+  <div class="fb-thumbs" id="fbThumbs" hidden>
+    <div class="fb-thumbs__inner" id="fbThumbsInner"></div>
+  </div>
+
+</div>
+
+<script src="js/flipbook.js"></script>
+</body>
+</html>
